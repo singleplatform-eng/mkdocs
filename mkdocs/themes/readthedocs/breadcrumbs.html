@@ -4,9 +4,9 @@
     {% if page %}
       {% for doc in page.ancestors %}
         {% if doc.link %}
-          <li><a href="{{ doc.link|e }}">{{ doc.title }}</a> &raquo;</li>
+          <li><a href="{{ doc.link|e }}">{{ doc.title | replace("_", " ")}}</a> &raquo;</li>
         {% else %}
-          <li>{{ doc.title }} &raquo;</li>
+          <li>{{ doc.title | replace("_", " ")}} &raquo;</li>
         {% endif %}
       {% endfor %}
     {% endif %}
