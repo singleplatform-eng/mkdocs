@@ -9,7 +9,7 @@ try:
 except ImportError:
     from backports.tempfile import TemporaryDirectory
 
-from mkdocs import exceptions
+from mkdocs import exceptions, utils
 from mkdocs.config import base, defaults
 from mkdocs.config.config_options import BaseConfigOption
 
@@ -134,7 +134,7 @@ class ConfigBaseTests(unittest.TestCase):
         config_file = tempfile.NamedTemporaryFile('w', delete=False)
         try:
             config_file.write(
-                "site_dir: output\nsite_uri: http://www.mkdocs.org\n")
+                "site_dir: output\nsite_uri: https://www.mkdocs.org\n")
             config_file.flush()
             config_file.close()
 
@@ -273,5 +273,7 @@ class ConfigBaseTests(unittest.TestCase):
             self.assertTrue(isinstance(cfg, base.Config))
             self.assertEqual(cfg['site_name'], 'MkDocs Test')
             self.assertEqual(cfg['docs_dir'], docs_dir)
+            self.assertEqual(cfg.config_file_path, config_fname)
+            self.assertIsInstance(cfg.config_file_path, utils.text_type)
         finally:
             config_dir.cleanup()

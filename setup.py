@@ -47,7 +47,7 @@ if sys.argv[-1] == 'publish':
 setup(
     name="mkdocs",
     version=get_version("mkdocs"),
-    url='http://www.mkdocs.org',
+    url='https://www.mkdocs.org',
     license='BSD',
     description='Project documentation with Markdown.',
     long_description=long_description,
@@ -61,7 +61,7 @@ setup(
         'livereload>=2.5.1',
         'Markdown>=2.3.1',
         'PyYAML>=3.10',
-        'tornado>=5.0',
+        'tornado>=5.0'
     ],
     python_requires='>=2.7.9,!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*',
     entry_points={
@@ -90,6 +90,7 @@ setup(
         'Programming Language :: Python :: 3.4',
         'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6',
+        'Programming Language :: Python :: 3.7',
         "Programming Language :: Python :: Implementation :: CPython",
         "Programming Language :: Python :: Implementation :: PyPy",
         'Topic :: Documentation',

@@ -105,8 +105,6 @@ class ConfigTests(unittest.TestCase):
             configs = [
                 dict(),  # default theme
                 {"theme": "readthedocs"},  # builtin theme
-                {"theme_dir": mytheme},  # custom only
-                {"theme": "readthedocs", "theme_dir": custom},  # builtin and custom
                 {"theme": {'name': 'readthedocs'}},  # builtin as complex
                 {"theme": {'name': None, 'custom_dir': mytheme}},  # custom only as complex
                 {"theme": {'name': 'readthedocs', 'custom_dir': custom}},  # builtin and custom as complex
@@ -128,11 +126,32 @@ class ConfigTests(unittest.TestCase):
                 {
                     'dirs': [os.path.join(theme_dir, 'mkdocs'), mkdocs_templates_dir],
                     'static_templates': ['404.html', 'sitemap.xml'],
-                    'vars': {'include_search_page': False, 'search_index_only': False}
+                    'vars': {
+                        'include_search_page': False,
+                        'search_index_only': False,
+                        'highlightjs': True,
+                        'hljs_style': 'github',
+                        'hljs_languages': [],
+                        'shortcuts': {'help': 191, 'next': 78, 'previous': 80, 'search': 83}
+                    }
                 }, {
                     'dirs': [os.path.join(theme_dir, 'readthedocs'), mkdocs_templates_dir],
                     'static_templates': ['404.html', 'sitemap.xml'],
-                    'vars': {'include_search_page': True, 'search_index_only': False}
+                    'vars': {
+                        'include_search_page': True,
+                        'search_index_only': False,
+                        'highlightjs': True,
+                        'hljs_languages': []
+                    }
+                }, {
+                    'dirs': [os.path.join(theme_dir, 'readthedocs'), mkdocs_templates_dir],
+                    'static_templates': ['404.html', 'sitemap.xml'],
+                    'vars': {
+                        'include_search_page': True,
+                        'search_index_only': False,
+                        'highlightjs': True,
+                        'hljs_languages': []
+                    }
                 }, {
                     'dirs': [mytheme, mkdocs_templates_dir],
                     'static_templates': ['sitemap.xml'],
@@ -140,19 +159,12 @@ class ConfigTests(unittest.TestCase):
                 }, {
                     'dirs': [custom, os.path.join(theme_dir, 'readthedocs'), mkdocs_templates_dir],
                     'static_templates': ['404.html', 'sitemap.xml'],
-                    'vars': {'include_search_page': True, 'search_index_only': False}
-                }, {
-                    'dirs': [os.path.join(theme_dir, 'readthedocs'), mkdocs_templates_dir],
-                    'static_templates': ['404.html', 'sitemap.xml'],
-                    'vars': {'include_search_page': True, 'search_index_only': False}
-                }, {
-                    'dirs': [mytheme, mkdocs_templates_dir],
-                    'static_templates': ['sitemap.xml'],
-                    'vars': {}
-                }, {
-                    'dirs': [custom, os.path.join(theme_dir, 'readthedocs'), mkdocs_templates_dir],
-                    'static_templates': ['404.html', 'sitemap.xml'],
-                    'vars': {'include_search_page': True, 'search_index_only': False}
+                    'vars': {
+                        'include_search_page': True,
+                        'search_index_only': False,
+                        'highlightjs': True,
+                        'hljs_languages': []
+                    }
                 }, {
                     'dirs': [os.path.join(theme_dir, 'mkdocs'), mkdocs_templates_dir],
                     'static_templates': ['404.html', 'sitemap.xml', 'foo.html'],
@@ -160,17 +172,18 @@ class ConfigTests(unittest.TestCase):
                         'show_sidebar': False,
                         'some_var': 'bar',
                         'include_search_page': False,
-                        'search_index_only': False
+                        'search_index_only': False,
+                        'highlightjs': True,
+                        'hljs_style': 'github',
+                        'hljs_languages': [],
+                        'shortcuts': {'help': 191, 'next': 78, 'previous': 80, 'search': 83}
                     }
                 }
             )
 
             for config_contents, result in zip(configs, results):
 
-                c = config.Config(schema=(
-                    ('theme', config_options.Theme(default='mkdocs')),
-                    ('theme_dir', config_options.ThemeDir(exists=True)),
-                ))
+                c = config.Config(schema=(('theme', config_options.Theme(default='mkdocs')),))
                 c.load_dict(config_contents)
                 errors, warnings = c.validate()
                 self.assertEqual(len(errors), 0)
@@ -178,56 +191,37 @@ class ConfigTests(unittest.TestCase):
                 self.assertEqual(c['theme'].static_templates, set(result['static_templates']))
                 self.assertEqual(dict([(k, c['theme'][k]) for k in iter(c['theme'])]), result['vars'])
 
-    def test_default_pages(self):
-        with TemporaryDirectory() as tmp_dir:
-            open(os.path.join(tmp_dir, 'index.md'), 'w').close()
-            open(os.path.join(tmp_dir, 'about.md'), 'w').close()
-            conf = config.Config(schema=config.DEFAULT_SCHEMA)
-            conf.load_dict({
-                'site_name': 'Example',
-                'docs_dir': tmp_dir,
-                'config_file_path': os.path.join(os.path.abspath('.'), 'mkdocs.yml')
-            })
-            conf.validate()
-            self.assertEqual(['index.md', 'about.md'], conf['pages'])
+    def test_empty_nav(self):
+        conf = config.Config(schema=config.DEFAULT_SCHEMA)
+        conf.load_dict({
+            'site_name': 'Example',
+            'config_file_path': os.path.join(os.path.abspath('.'), 'mkdocs.yml')
+        })
+        conf.validate()
+        self.assertEqual(conf['nav'], None)
 
-    def test_default_pages_nested(self):
-        with TemporaryDirectory() as tmp_dir:
-            open(os.path.join(tmp_dir, 'index.md'), 'w').close()
-            open(os.path.join(tmp_dir, 'getting-started.md'), 'w').close()
-            open(os.path.join(tmp_dir, 'about.md'), 'w').close()
-            os.makedirs(os.path.join(tmp_dir, 'subA'))
-            open(os.path.join(tmp_dir, 'subA', 'index.md'), 'w').close()
-            os.makedirs(os.path.join(tmp_dir, 'subA', 'subA1'))
-            open(os.path.join(tmp_dir, 'subA', 'subA1', 'index.md'), 'w').close()
-            os.makedirs(os.path.join(tmp_dir, 'subC'))
-            open(os.path.join(tmp_dir, 'subC', 'index.md'), 'w').close()
-            os.makedirs(os.path.join(tmp_dir, 'subB'))
-            open(os.path.join(tmp_dir, 'subB', 'index.md'), 'w').close()
-            conf = config.Config(schema=config.DEFAULT_SCHEMA)
-            conf.load_dict({
-                'site_name': 'Example',
-                'docs_dir': tmp_dir,
-                'config_file_path': os.path.join(os.path.abspath('.'), 'mkdocs.yml')
-            })
-            conf.validate()
-            self.assertEqual([
-                'index.md',
-                'about.md',
-                'getting-started.md',
-                {'subA': [
-                    os.path.join('subA', 'index.md'),
-                    {'subA1': [
-                        os.path.join('subA', 'subA1', 'index.md')
-                    ]}
-                ]},
-                {'subB': [
-                    os.path.join('subB', 'index.md')
-                ]},
-                {'subC': [
-                    os.path.join('subC', 'index.md')
-                ]}
-            ], conf['pages'])
+    def test_copy_pages_to_nav(self):
+        # TODO: remove this when pages config setting is fully deprecated.
+        conf = config.Config(schema=config.DEFAULT_SCHEMA)
+        conf.load_dict({
+            'site_name': 'Example',
+            'pages': ['index.md', 'about.md'],
+            'config_file_path': os.path.join(os.path.abspath('.'), 'mkdocs.yml')
+        })
+        conf.validate()
+        self.assertEqual(conf['nav'], ['index.md', 'about.md'])
+
+    def test_dont_overwrite_nav_with_pages(self):
+        # TODO: remove this when pages config setting is fully deprecated.
+        conf = config.Config(schema=config.DEFAULT_SCHEMA)
+        conf.load_dict({
+            'site_name': 'Example',
+            'pages': ['index.md', 'about.md'],
+            'nav': ['foo.md', 'bar.md'],
+            'config_file_path': os.path.join(os.path.abspath('.'), 'mkdocs.yml')
+        })
+        conf.validate()
+        self.assertEqual(conf['nav'], ['foo.md', 'bar.md'])
 
     def test_doc_dir_in_site_dir(self):
 
@@ -239,7 +233,7 @@ class ConfigTests(unittest.TestCase):
             {'docs_dir': '.', 'site_dir': '.'},
             {'docs_dir': 'docs', 'site_dir': ''},
             {'docs_dir': '', 'site_dir': ''},
-            {'docs_dir': j('..', 'mkdocs', 'docs'), 'site_dir': 'docs'},
+            {'docs_dir': 'docs', 'site_dir': 'docs'},
         )
 
         conf = {

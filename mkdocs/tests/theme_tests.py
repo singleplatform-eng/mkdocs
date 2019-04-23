@@ -28,7 +28,14 @@ class ThemeTests(unittest.TestCase):
             [os.path.join(theme_dir, 'mkdocs'), mkdocs_templates_dir]
         )
         self.assertEqual(theme.static_templates, set(['404.html', 'sitemap.xml']))
-        self.assertEqual(get_vars(theme), {'include_search_page': False, 'search_index_only': False})
+        self.assertEqual(get_vars(theme), {
+            'include_search_page': False,
+            'search_index_only': False,
+            'highlightjs': True,
+            'hljs_style': 'github',
+            'hljs_languages': [],
+            'shortcuts': {'help': 191, 'next': 78, 'previous': 80, 'search': 83}
+        })
 
     def test_custom_dir(self):
         custom = tempfile.mkdtemp()
@@ -67,7 +74,7 @@ class ThemeTests(unittest.TestCase):
         self.assertTrue('new' in theme)
         self.assertEqual(theme['new'], 42)
 
-    @mock.patch('mkdocs.utils.yaml_load', return_value={})
+    @mock.patch('mkdocs.utils.yaml_load', return_value=None)
     def test_no_theme_config(self, m):
         theme = Theme(name='mkdocs')
         self.assertEqual(m.call_count, 1)
